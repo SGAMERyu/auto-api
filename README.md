@@ -1,0 +1,2 @@
+# auto-api
+generate interface
