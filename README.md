@@ -1,2 +1,3 @@
-# auto-api
-generate interface
+# start-ts-lib
+
+typescript lib template
