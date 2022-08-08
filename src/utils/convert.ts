@@ -1,3 +1,5 @@
+import { Definition } from "../types";
+
 export function convertArrayToMap(
   arr: Record<string, unknown>[],
   label: string | ((val: Record<string, unknown>) => string),

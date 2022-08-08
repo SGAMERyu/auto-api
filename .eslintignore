@@ -1,3 +1,6 @@
 .eslintrc.js
 node_modules
 dist
+service
+tsup.config.ts
+bin

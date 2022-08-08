@@ -1,95 +1,169 @@
+import chalk from "chalk";
 import {
   NORMALIZE_TYPE,
   NORMALIZE_RESPONSE,
   SwaggerApiResponse,
   Definition,
-  SwaggerParameters,
-  SwaggerResponses,
-  Schema,
-  Config,
   SwaggerApiData,
   ApiInterface,
   GroupApiInterface,
+  Schema,
+  ApiGroup,
+  SwaggerResponses,
+  SwaggerParameters,
+  Request,
 } from "../types";
+import { log } from "./log";
 
-export function normalizeSwagger(data: SwaggerApiResponse, config: Config) {
+export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
   const { paths, definitions } = data;
-  const { groups } = config;
-  const apiGroup: GroupApiInterface[] = groups.map((group) => {
-    const { name, comment } = group;
+
+  const serviceGroup: GroupApiInterface[] = groups.map((group) => {
+    const { name, description } = group;
     let apiList: ApiInterface[] = [];
+    let publicDependencyInterface: Set<Schema> = new Set();
     for (const [path, apiData] of Object.entries(paths)) {
-      if (group.apiPrefix.test(path)) {
-        const list = generateApiData(path, apiData);
-        apiList = apiList.concat(list);
+      let patten = group.apiPrefix;
+      if (typeof group.apiPrefix === "string") {
+        patten = new RegExp(patten, "g");
+      }
+      if (patten.test(path)) {
+        log(chalk.blue(`[${path}]: start build interface`));
+        const { apiDataList, apiDependentInterface } = generateApiData(
+          path,
+          apiData
+        );
+        apiList = apiList.concat(apiDataList);
+        publicDependencyInterface = new Set([
+          ...publicDependencyInterface,
+          ...apiDependentInterface,
+        ]);
+        log(chalk.green(`[${path}] build interface is success`));
       }
     }
     return {
       name,
-      comment,
+      description,
       apiList,
+      publicDependencyInterface,
     };
   });
 
   function generateApiData(url: string, apiData: SwaggerApiData) {
     const apiDataList: ApiInterface[] = [];
+    let apiDependentInterface: Set<Schema> = new Set();
+    // 遍历api数据中的http method，通常来说应该只有一个http method
     for (const [method, data] of Object.entries(apiData)) {
+      // 获取200返回结果
+      const { parameters, responses } = data;
+      const { request, publicDependencyInterface: requestInterface } =
+        generateRequestInterface(parameters || []);
+      const { response, publicDependencyInterface: responseInterface } =
+        generateResponseInterface(responses);
+
+      apiDependentInterface = new Set([
+        ...requestInterface,
+        ...responseInterface,
+      ]);
+
       apiDataList.push({
         url,
         method,
-        comment: data.summary,
-        response: generateResponse(data.responses),
+        description: data.summary,
+        request,
+        response,
       });
     }
-    return apiDataList;
+
+    return { apiDataList, apiDependentInterface };
   }
 
-  function generateRequest(parameters: SwaggerParameters[] | undefined) {
-    return undefined;
-  }
-
-  function generateResponse(responses: SwaggerResponses): Schema {
-    if (!responses[200] || !responses[200].schema)
-      return {
-        type: "string",
-      };
-
-    return findDefinition(responses[200].schema.$ref);
-  }
-
-  function findDefinition(ref: string): Schema {
-    const name = ref.split("/").pop()!;
-    const definition = Reflect.get(definitions, name) as Definition;
-    const { type, title, description, properties } = definition;
-    const newProperties = Object.create(null) as Record<string, Schema>;
+  // 从definition 获取对应的interfaceData
+  function generateInterfaceFromSwaggerDefinition(
+    interfaceData: Definition,
+    dep: Set<Schema> = new Set()
+  ) {
+    const { properties } = interfaceData;
     Object.keys(properties).forEach((key) => {
-      const { items, schema, type, title, description } = properties[key];
-      const schemaRef = items || schema;
-      newProperties[key] = schemaRef
-        ? findDefinition(schemaRef.$ref)
-        : {
-            type,
-            title,
-            comment: description,
-          };
+      const { schema, items, $ref } = properties[key];
+      const schemaRef = schema?.$ref || items?.$ref || $ref;
+      if (schemaRef) {
+        const { interfaceName, interfaceData } =
+          getInterfaceFromDefinition(schemaRef);
+        Reflect.set(properties[key], "refType", interfaceName);
+        generateInterfaceFromSwaggerDefinition(interfaceData, dep);
+      }
     });
-    return {
-      type: type,
-      title: title,
-      comment: description,
-      properties,
-    };
+    dep.add(interfaceData as any);
+    return dep;
   }
 
-  return apiGroup;
+  function generateResponseInterface(responseData: SwaggerResponses) {
+    let newResponse = { type: "string" };
+    const publicDependencyInterface: Set<Schema> = new Set();
+    const { schema } = responseData[200];
+    if (!schema) return { response: newResponse, publicDependencyInterface };
+    const { interfaceData, interfaceName } = getInterfaceFromDefinition(
+      schema.$ref
+    );
+    newResponse = { type: interfaceName };
+    generateInterfaceFromSwaggerDefinition(
+      interfaceData,
+      publicDependencyInterface
+    );
+    return { response: newResponse, publicDependencyInterface };
+  }
+
+  function generateRequestInterface(parameters: SwaggerParameters[]) {
+    const publicDependencyInterface: Set<Schema> = new Set();
+    const request: Request = {
+      body: null,
+      query: null,
+      path: [],
+    };
+    parameters.forEach((parameter) => {
+      const { in: type, schema } = parameter;
+      if (type === "body" && schema?.$ref) {
+        const { interfaceData, interfaceName } = getInterfaceFromDefinition(
+          schema.$ref
+        );
+        request.body = { type: interfaceName };
+        generateInterfaceFromSwaggerDefinition(
+          interfaceData,
+          publicDependencyInterface
+        );
+      } else if (type === 'path') {
+        request.path.push(parameter) 
+      } else if (type === 'query') {
+        // 
+      }
+    });
+
+    return { request, publicDependencyInterface };
+  }
+  // 获取interface name 从swagger中的data里面
+  function getInterfaceFromDefinition(ref: string) {
+    // 获取definitions定义的model类型名字
+    const name = ref.split("/").pop()!;
+    // 获取最终的definitions的命名
+    const interfaceName = name.replace(/«|»/g, "");
+
+    // 获取真实数据
+    const interfaceData = Reflect.get(definitions, name) as Definition;
+    Reflect.set(interfaceData, "title", interfaceName);
+
+    return { interfaceData, interfaceName };
+  }
+
+  return serviceGroup;
 }
 
 export function normalize(
   type: NORMALIZE_TYPE,
   response: NORMALIZE_RESPONSE,
-  config: Config
+  groups: ApiGroup[]
 ) {
   if (type === NORMALIZE_TYPE.SWAGGER) {
-    return normalizeSwagger(response, config);
+    return normalizeSwagger(response, groups);
   }
 }

@@ -3,6 +3,24 @@ import { HTTP_METHODS, HTTP_STATUS_CODE, PARAMS_TYPE } from "./operation";
 export type URL = string;
 export type Version = string;
 
+export const enum SWAGGER_DATA_TYPE {
+  NUMBER = "number",
+  STRING = "string",
+  INTEGER = "integer",
+  BOOLEAN = "boolean",
+  ARRAY = "array",
+  OBJECT = "object",
+}
+
+export const SWAGGER_DATA_TYPE_TO_TS_TYPE: {
+  [key in SWAGGER_DATA_TYPE | string]: string;
+} = {
+  [SWAGGER_DATA_TYPE.NUMBER]: "number",
+  [SWAGGER_DATA_TYPE.INTEGER]: "number",
+  [SWAGGER_DATA_TYPE.BOOLEAN]: "boolean",
+  [SWAGGER_DATA_TYPE.STRING]: "string",
+};
+
 export interface SwaggerApiResponse {
   // 元数据
   info: Info;
@@ -72,8 +90,9 @@ export type Properties = {
     type: string;
     title: string;
     description: string;
+    $ref: string;
     items?: { $ref: string };
-    schema?: { $ref: string }
+    schema?: { $ref: string };
   };
 };
 
@@ -81,9 +100,12 @@ export interface SwaggerParameters {
   name: string;
   in: PARAMS_TYPE;
   required?: boolean;
+  // 描述
   description?: string;
   // 类型
   type: string;
+  refType?: string;
+  schema?: { $ref: string };
 }
 
 export type SwaggerResponses = {
