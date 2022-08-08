@@ -9,7 +9,7 @@
   },
   "scripts": {
     "prepare": "husky install",
-    "commit": "git-cz",
+    "commit": "npx git-cz",
     "start": "esno watch src/index.ts",
     "build": "tsup",
     "lint": "lint-staged"
@@ -21,7 +21,7 @@
     "*.js": [
       "prettier --write"
     ],
-    "*.ts?(x)": [
+    "src/*.ts?(x)": [
       "eslint",
       "prettier --parser=typescript --write"
     ]
