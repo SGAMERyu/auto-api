@@ -17,6 +17,7 @@ export interface Config {
 
 export interface ImportModule {
   namedImports: string[];
+  defaultImport?: string;
   moduleSpecifier: string;
 }
 

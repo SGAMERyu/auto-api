@@ -19,6 +19,8 @@ export const SWAGGER_DATA_TYPE_TO_TS_TYPE: {
   [SWAGGER_DATA_TYPE.INTEGER]: "number",
   [SWAGGER_DATA_TYPE.BOOLEAN]: "boolean",
   [SWAGGER_DATA_TYPE.STRING]: "string",
+  [SWAGGER_DATA_TYPE.OBJECT]: "object",
+  [SWAGGER_DATA_TYPE.ARRAY]: "array",
 };
 
 export interface SwaggerApiResponse {
@@ -91,7 +93,7 @@ export type Properties = {
     title: string;
     description: string;
     $ref: string;
-    items?: { $ref: string };
+    items?: { $ref: string, type: string };
     schema?: { $ref: string };
   };
 };

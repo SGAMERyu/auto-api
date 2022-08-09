@@ -31,6 +31,6 @@ export function createVueQueryTemplate(
       .map((item) => item.name)
       .join(",")}], () => fetch.${method}(${requestUrl} ${
       request?.body ? ",body" : ""
-    }))`,
+    }) as Promise<${response.type}>)`,
   };
 }

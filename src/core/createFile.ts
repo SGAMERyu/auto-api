@@ -1,10 +1,8 @@
-import { Project, SyntaxKind } from "ts-morph";
+import { Project } from "ts-morph";
 import { resolve } from "path";
 import {
-  ApiInterface,
   Config,
   GroupApiInterface,
-  ImportModule,
   SWAGGER_DATA_TYPE,
   SWAGGER_DATA_TYPE_TO_TS_TYPE,
 } from "../types";
@@ -40,8 +38,14 @@ export function createInterfaceFolder(
             type as SWAGGER_DATA_TYPE
           )
         ) {
-          propertyItemType =
-            type === SWAGGER_DATA_TYPE.OBJECT ? refType! : `${refType!}[]`;
+          if (!refType && propertyItemType === SWAGGER_DATA_TYPE.OBJECT) {
+            propertyItemType = "Record<string, any>";
+          } else {
+            propertyItemType =
+              type === SWAGGER_DATA_TYPE.OBJECT && refType
+                ? refType
+                : `${refType!}[]`;
+          }
         }
         // 如果是枚举
         if (enums) {
@@ -74,30 +78,32 @@ export function createServiceFolder(
 ) {
   const { importList, output } = config;
   const filePath = resolve(process.cwd(), `${output}`);
-  const importTypeList: string[] = [];
   apiGroup.forEach(({ name, apiList }) => {
+    // 可能会有相同的引用，因此需要去重
+    const importTypeList: Set<string> = new Set();
     const sourceFile = project.createSourceFile(
       `${filePath}/${name}/request.ts`,
       "",
       { overwrite: true }
     );
-    importList.forEach(({ namedImports, moduleSpecifier }) => {
+    importList.forEach(({ namedImports, moduleSpecifier, defaultImport }) => {
       sourceFile.addImportDeclaration({
+        defaultImport,
         namedImports,
         moduleSpecifier,
       });
     });
     apiList?.forEach((apiData) => {
       const { description, response, request } = apiData;
-      importTypeList.push(response.type);
-      request?.body?.type && importTypeList.push(request.body.type);
+      response.type && !response?.noExport && importTypeList.add(response.type);
+      request?.body?.type && importTypeList.add(request.body.type);
       description && sourceFile.addStatements(`// ${description}`);
       sourceFile
         .addFunction(createVueQueryTemplate(apiData))
         .setIsExported(true);
     });
     sourceFile.addImportDeclaration({
-      namedImports: importTypeList,
+      namedImports: [...importTypeList],
       moduleSpecifier: "./interface",
     });
     sourceFile.saveSync();

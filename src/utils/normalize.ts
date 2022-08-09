@@ -12,6 +12,8 @@ import {
   SwaggerResponses,
   SwaggerParameters,
   Request,
+  SWAGGER_DATA_TYPE_TO_TS_TYPE,
+  Response,
 } from "../types";
 import { log } from "./log";
 
@@ -28,7 +30,6 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
         patten = new RegExp(patten, "g");
       }
       if (patten.test(path)) {
-        log(chalk.blue(`[${path}]: start build interface`));
         const { apiDataList, apiDependentInterface } = generateApiData(
           path,
           apiData
@@ -38,7 +39,6 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
           ...publicDependencyInterface,
           ...apiDependentInterface,
         ]);
-        log(chalk.green(`[${path}] build interface is success`));
       }
     }
     return {
@@ -86,12 +86,15 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
     const { properties } = interfaceData;
     Object.keys(properties).forEach((key) => {
       const { schema, items, $ref } = properties[key];
+      // 引用的definition对象
       const schemaRef = schema?.$ref || items?.$ref || $ref;
       if (schemaRef) {
         const { interfaceName, interfaceData } =
           getInterfaceFromDefinition(schemaRef);
         Reflect.set(properties[key], "refType", interfaceName);
         generateInterfaceFromSwaggerDefinition(interfaceData, dep);
+      } else if (items && items.type) {
+        Reflect.set(properties[key], "refType", `${items.type}`);
       }
     });
     dep.add(interfaceData as any);
@@ -99,7 +102,7 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
   }
 
   function generateResponseInterface(responseData: SwaggerResponses) {
-    let newResponse = { type: "string" };
+    let newResponse: Response = { type: "any", noExport: true };
     const publicDependencyInterface: Set<Schema> = new Set();
     const { schema } = responseData[200];
     if (!schema) return { response: newResponse, publicDependencyInterface };
@@ -132,10 +135,13 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
           interfaceData,
           publicDependencyInterface
         );
-      } else if (type === 'path') {
-        request.path.push(parameter) 
-      } else if (type === 'query') {
-        // 
+      } else if (type === "path") {
+        request.path.push({
+          ...parameter,
+          type: SWAGGER_DATA_TYPE_TO_TS_TYPE[parameter.type],
+        });
+      } else if (type === "query") {
+        //
       }
     });
 
@@ -146,7 +152,7 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
     // 获取definitions定义的model类型名字
     const name = ref.split("/").pop()!;
     // 获取最终的definitions的命名
-    const interfaceName = name.replace(/«|»/g, "");
+    const interfaceName = name.replace(/«|»|,/g, "");
 
     // 获取真实数据
     const interfaceData = Reflect.get(definitions, name) as Definition;

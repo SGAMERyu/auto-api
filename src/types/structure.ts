@@ -44,6 +44,7 @@ export interface RequestPath {
 
 export interface Response {
   type: string;
+  noExport?: boolean;
 }
 
 export interface Schema {
@@ -56,7 +57,7 @@ export interface Schema {
   // 注释
   description?: string;
   required?: boolean;
-  enum: string[];
+  enum?: string[];
   properties?: {
     [name in string]: Schema;
   };
