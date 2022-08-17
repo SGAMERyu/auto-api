@@ -10,7 +10,12 @@ export function createVueQueryTemplate(
   api: ApiInterface
 ): OptionalKind<FunctionDeclarationStructure> {
   const { url, method, response, request } = api;
-  const plainUrl = url.match(/[^{\\}]+(?=})/g);
+  let replace = "From";
+  const plainUrl = url.replace(/{(.*?)}/g, (matchers, ...list) => {
+    replace += list[0];
+    console.log(list)
+    return replace;
+  });
   console.log(plainUrl);
   let requestUrl = `"${url}"`;
   const queryName = camelCase(

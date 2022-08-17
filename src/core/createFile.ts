@@ -106,7 +106,7 @@ export function createServiceFolder(
       response.type && !response?.noExport && importTypeList.add(response.type);
       request?.body?.type && importTypeList.add(request.body.type);
       description && sourceFile.addStatements(`// ${description}`);
-      console.log(createVueQueryTemplate(apiData).name)
+      createVueQueryTemplate(apiData);
       // sourceFile
       //   .addFunction(createVueQueryTemplate(apiData))
       //   .setIsExported(true);
@@ -117,4 +117,4 @@ export function createServiceFolder(
     });
     sourceFile.saveSync();
   });
-} 
+}
