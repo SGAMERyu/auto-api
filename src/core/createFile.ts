@@ -106,10 +106,9 @@ export function createServiceFolder(
       response.type && !response?.noExport && importTypeList.add(response.type);
       request?.body?.type && importTypeList.add(request.body.type);
       description && sourceFile.addStatements(`// ${description}`);
-      createVueQueryTemplate(apiData);
-      // sourceFile
-      //   .addFunction(createVueQueryTemplate(apiData))
-      //   .setIsExported(true);
+      sourceFile
+        .addFunction(createVueQueryTemplate(apiData))
+        .setIsExported(true);
     });
     sourceFile.addImportDeclaration({
       namedImports: [...importTypeList],

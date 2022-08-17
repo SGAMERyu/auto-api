@@ -2,3 +2,4 @@ node_modules
 dist
 service
 auto-api.json
+api

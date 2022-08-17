@@ -12,7 +12,7 @@ export const templateImportMap: Record<
   OptionalKind<ImportDeclarationStructure>
 > = {
   [TEMPLATE_TYPE.VUE_QUERY]: {
-    namedImports: ["useQuery", "UseQueryOptions"],
+    namedImports: ["useQuery", "UseQueryOptions", 'useMutation', 'UseMutationOptions'],
     moduleSpecifier: "vue-query",
   },
 };
