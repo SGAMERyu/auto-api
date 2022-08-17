@@ -105,10 +105,10 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
     let newResponse: Response = { type: "any", noExport: true };
     const publicDependencyInterface: Set<Schema> = new Set();
     const { schema } = responseData[200];
-    if (!schema) return { response: newResponse, publicDependencyInterface };
-    const { interfaceData, interfaceName } = getInterfaceFromDefinition(
-      schema.$ref
-    );
+    const schemaRef = schema?.$ref || schema?.items?.$ref;
+    if (!schemaRef) return { response: newResponse, publicDependencyInterface };
+    const { interfaceData, interfaceName } =
+      getInterfaceFromDefinition(schemaRef);
     newResponse = { type: interfaceName };
     generateInterfaceFromSwaggerDefinition(
       interfaceData,

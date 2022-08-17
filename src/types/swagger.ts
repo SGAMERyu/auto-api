@@ -10,6 +10,7 @@ export const enum SWAGGER_DATA_TYPE {
   BOOLEAN = "boolean",
   ARRAY = "array",
   OBJECT = "object",
+  FILE = 'file'
 }
 
 export const SWAGGER_DATA_TYPE_TO_TS_TYPE: {
@@ -21,6 +22,7 @@ export const SWAGGER_DATA_TYPE_TO_TS_TYPE: {
   [SWAGGER_DATA_TYPE.STRING]: "string",
   [SWAGGER_DATA_TYPE.OBJECT]: "object",
   [SWAGGER_DATA_TYPE.ARRAY]: "array",
+  [SWAGGER_DATA_TYPE.FILE]: 'File'
 };
 
 export interface SwaggerApiResponse {
@@ -115,6 +117,10 @@ export type SwaggerResponses = {
     description: string;
     schema: {
       $ref: string;
+      type: string,
+      items?: {
+        $ref: string
+      }
     };
   };
 };

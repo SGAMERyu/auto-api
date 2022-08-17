@@ -26,3 +26,12 @@ export interface ApiGroup {
   description: string;
   apiPrefix: RegExp;
 }
+
+export const DEFAULT_CLI_CONFIG: Config = {
+  groups: [],
+  url: "",
+  output: "service",
+  type: NORMALIZE_TYPE.SWAGGER,
+  importList: [],
+  template: TEMPLATE_TYPE.VUE_QUERY,
+};
