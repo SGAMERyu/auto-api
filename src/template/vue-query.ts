@@ -20,7 +20,9 @@ function createGetApi(
 }
 
 function createPostApi(requestUrl: string, body?: any) {
-  return `return useMutation<TData, TError, TVariables, TContext>(() => fetch.post(${requestUrl} ${
+  return `return useMutation<TData, TError, TVariables, TContext>((${
+    body ? "body" : ""
+  }) => fetch.post(${requestUrl} ${
     body ? ",body" : ""
   }) as Promise<TData>, options)`;
 }
@@ -54,7 +56,7 @@ export function createVueQueryTemplate(
   function createParameters(method: HTTP_METHODS) {
     const parameters: OptionalKind<ParameterDeclarationStructure>[] = [];
     if (request) {
-      if (request.body) {
+      if (request.body && method === HTTP_METHODS.GET) {
         parameters.push({ name: "body", type: request.body.type });
       }
       if (request.path) {
@@ -90,9 +92,9 @@ export function createVueQueryTemplate(
         return [{ name: "T", default: response.type }];
       case HTTP_METHODS.POST:
         return [
+          { name: "TVariables", default: "void" },
           { name: "TData", default: response.type },
           { name: "TError", default: "unknown" },
-          { name: "TVariables", default: "void" },
           { name: "TContext", default: "unknown" },
         ];
       default:
