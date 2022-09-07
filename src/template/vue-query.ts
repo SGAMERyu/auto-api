@@ -16,7 +16,7 @@ function createGetApi(
     .map((item) => item.name)
     .join(",")}], () => fetch.get(${requestUrl} ${
     body ? ",body" : ""
-  }) as Promise<T>, options)`;
+  }, ...restOptions) as Promise<T>, options)`;
 }
 
 function createPostApi(requestUrl: string, body?: any) {
@@ -24,7 +24,7 @@ function createPostApi(requestUrl: string, body?: any) {
     body ? "body" : ""
   }) => fetch.post(${requestUrl} ${
     body ? ",body" : ""
-  }) as Promise<TData>, options)`;
+  }, ...restOptions) as Promise<TData>, options)`;
 }
 
 export function createVueQueryTemplate(
@@ -49,19 +49,22 @@ export function createVueQueryTemplate(
   );
   const requestName = camelCase(`${method}-${plainUrl.replace(/\//g, "-")}`);
 
-  const parameters = createParameters(method as HTTP_METHODS);
+  const { vueQueryParameters, requestParameters } = createVueQueryParameters(
+    method as HTTP_METHODS
+  );
   const typeParameters = createTypeParameters(method as HTTP_METHODS);
-  const statements = createStatement(method as HTTP_METHODS);
+  const statements = createStatement(method as HTTP_METHODS, requestParameters);
 
-  function createParameters(method: HTTP_METHODS) {
-    const parameters: OptionalKind<ParameterDeclarationStructure>[] = [];
+  function createVueQueryParameters(method: HTTP_METHODS) {
+    let vueQueryParameters: OptionalKind<ParameterDeclarationStructure>[] = [];
+    const requestParameters: OptionalKind<ParameterDeclarationStructure>[] = [];
     if (request) {
       if (request.body && method === HTTP_METHODS.GET) {
-        parameters.push({ name: "body", type: request.body.type });
+        requestParameters.push({ name: "body", type: request.body.type });
       }
       if (request.path) {
         request.path.forEach(({ name, type }) => {
-          parameters.push({ name, type });
+          requestParameters.push({ name, type });
           requestUrl = `\`${url.replaceAll(`{${name}}`, "${" + name + "}")}\``;
         });
       }
@@ -69,21 +72,36 @@ export function createVueQueryTemplate(
 
     switch (method) {
       case HTTP_METHODS.GET:
-        parameters.push({
-          name: "options",
-          type: `UseQueryOptions<T>`,
-          initializer: "{}",
-        });
+        vueQueryParameters = requestParameters.concat([
+          {
+            name: "options",
+            type: `UseQueryOptions<T>`,
+            initializer: "{}",
+          },
+          {
+            name: "restOptions",
+            type: "any[]",
+            isRestParameter: true,
+          },
+        ]);
         break;
       case HTTP_METHODS.POST:
-        parameters.push({
-          name: "options",
-          type: `UseMutationOptions<TData, TError, TVariables, TContext>`,
-          initializer: "{}",
-        });
+        vueQueryParameters = requestParameters.concat([
+          {
+            name: "options",
+            type: `UseMutationOptions<TData, TError, TVariables, TContext>`,
+            initializer: "{}",
+          },
+          {
+            name: "restOptions",
+            type: "any",
+            isRestParameter: true,
+          },
+        ]);
+
         break;
     }
-    return parameters;
+    return { vueQueryParameters, requestParameters };
   }
 
   function createTypeParameters(method: HTTP_METHODS) {
@@ -102,14 +120,17 @@ export function createVueQueryTemplate(
     }
   }
 
-  function createStatement(method: HTTP_METHODS) {
+  function createStatement(
+    method: HTTP_METHODS,
+    requestParameters: OptionalKind<ParameterDeclarationStructure>[]
+  ) {
     switch (method) {
       case HTTP_METHODS.GET:
-        return createGetApi(requestName, parameters, requestUrl, request?.body);
+        return createGetApi(requestName, requestParameters, requestUrl, request?.body);
       case HTTP_METHODS.POST:
         return createPostApi(requestUrl, request?.body);
       default:
-        return `return useQuery<T>(['${requestName}', ${parameters
+        return `return useQuery<T>(['${requestName}', ${requestParameters
           .map((item) => item.name)
           .join(",")}], () => fetch.${method}(${requestUrl} ${
           request?.body ? ",body" : ""
@@ -119,7 +140,7 @@ export function createVueQueryTemplate(
 
   return {
     name: queryName,
-    parameters,
+    parameters: vueQueryParameters,
     typeParameters,
     statements,
   };

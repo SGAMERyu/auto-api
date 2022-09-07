@@ -14,6 +14,7 @@ import {
   Request,
   SWAGGER_DATA_TYPE_TO_TS_TYPE,
   Response,
+  SWAGGER_DATA_TYPE,
 } from "../types";
 import { log } from "./log";
 
@@ -142,6 +143,10 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
         });
       } else if (type === "query") {
         //
+      } else if (type === "formData") {
+        request.body = {
+          type: SWAGGER_DATA_TYPE_TO_TS_TYPE[SWAGGER_DATA_TYPE.FILE],
+        };
       }
     });
 

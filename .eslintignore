@@ -4,3 +4,4 @@ dist
 service
 tsup.config.ts
 bin
+api
