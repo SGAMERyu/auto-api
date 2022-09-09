@@ -45,6 +45,7 @@ export interface RequestPath {
 export interface Response {
   type: string;
   noExport?: boolean;
+  isArray?: boolean;
 }
 
 export interface Schema {

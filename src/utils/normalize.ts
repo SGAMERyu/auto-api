@@ -110,7 +110,10 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
     if (!schemaRef) return { response: newResponse, publicDependencyInterface };
     const { interfaceData, interfaceName } =
       getInterfaceFromDefinition(schemaRef);
-    newResponse = { type: interfaceName };
+    newResponse = {
+      type: interfaceName,
+      isArray: schema.type === "array",
+    };
     generateInterfaceFromSwaggerDefinition(
       interfaceData,
       publicDependencyInterface
@@ -127,10 +130,10 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
     };
     parameters.forEach((parameter) => {
       const { in: type, schema } = parameter;
-      if (type === "body" && schema?.$ref) {
-        const { interfaceData, interfaceName } = getInterfaceFromDefinition(
-          schema.$ref
-        );
+      const schemaRef = schema?.$ref || schema?.items?.$ref;
+      if (type === "body" && schemaRef) {
+        const { interfaceData, interfaceName } =
+          getInterfaceFromDefinition(schemaRef);
         request.body = { type: interfaceName };
         generateInterfaceFromSwaggerDefinition(
           interfaceData,

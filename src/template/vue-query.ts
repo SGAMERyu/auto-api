@@ -107,10 +107,15 @@ export function createVueQueryTemplate(
   function createTypeParameters(method: HTTP_METHODS) {
     switch (method) {
       case HTTP_METHODS.GET:
-        return [{ name: "T", default: response.type }];
+        return [
+          {
+            name: "T",
+            default: response.isArray ? `${response.type}[]` : response.type,
+          },
+        ];
       case HTTP_METHODS.POST:
         return [
-          { name: "TVariables", default: "void" },
+          { name: "TVariables", default: request?.body?.type || "void" },
           { name: "TData", default: response.type },
           { name: "TError", default: "unknown" },
           { name: "TContext", default: "unknown" },
@@ -126,7 +131,12 @@ export function createVueQueryTemplate(
   ) {
     switch (method) {
       case HTTP_METHODS.GET:
-        return createGetApi(requestName, requestParameters, requestUrl, request?.body);
+        return createGetApi(
+          requestName,
+          requestParameters,
+          requestUrl,
+          request?.body
+        );
       case HTTP_METHODS.POST:
         return createPostApi(requestUrl, request?.body);
       default:
