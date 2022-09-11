@@ -4,7 +4,7 @@ export interface Config {
   // 分组
   groups: ApiGroup[];
   // 获取json地址
-  url: string;
+  url: string | string[];
   // 文件输出位置
   output: string;
   // 文件源类型

@@ -16,11 +16,9 @@ import {
   Response,
   SWAGGER_DATA_TYPE,
 } from "../types";
-import { log } from "./log";
 
 export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
   const { paths, definitions } = data;
-
   const serviceGroup: GroupApiInterface[] = groups.map((group) => {
     const { name, description } = group;
     let apiList: ApiInterface[] = [];
