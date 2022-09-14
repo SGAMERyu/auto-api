@@ -21,7 +21,7 @@ function createGetApi(
 
 function createPostApi(requestUrl: string, body?: any) {
   return `return useMutation<TData, TError, TVariables, TContext>((${
-    body ? "body" : ""
+    body ? "body: TVariables" : ""
   }) => fetch.post(${requestUrl} ${
     body ? ",body" : ""
   }, ...restOptions) as Promise<TData>, options)`;

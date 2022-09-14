@@ -13,7 +13,6 @@ async function startup() {
     config = Object.assign(DEFAULT_CLI_CONFIG, config);
     const { url, type, groups, output } = config;
     const data = await fetchRawData(url);
-    console.log(data.paths);
     log(chalk.blue("start normalize api data"));
     const apiGroup = normalize(type, data, groups);
     log(chalk.green("normalize api data is finish"));
@@ -21,7 +20,6 @@ async function startup() {
     createServiceFolder(apiGroup || [], config);
     log(chalk.green("generate api success"));
   } catch (error) {
-    console.log(error);
     log(chalk.red(error));
   }
 }
