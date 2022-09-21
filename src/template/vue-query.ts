@@ -1,10 +1,11 @@
-import { ApiInterface, HTTP_METHODS } from "../types";
+import { ApiInterface, HTTP_METHODS, RequestPath } from "../types";
 import camelCase from "camelcase";
 import {
   FunctionDeclarationStructure,
   OptionalKind,
   ParameterDeclarationStructure,
 } from "ts-morph";
+import { convertPathsToString } from "../utils";
 
 function createGetApi(
   requestName: string,
@@ -19,11 +20,22 @@ function createGetApi(
   }, ...restOptions) as Promise<T>, options)`;
 }
 
-function createPostApi(requestUrl: string, body?: any) {
-  return `return useMutation<TData, TError, TVariables, TContext>((${
-    body ? "body: TVariables" : ""
-  }) => fetch.post(${requestUrl} ${
-    body ? ",body" : ""
+function createPostApi(
+  requestUrl: string,
+  paths: RequestPath[],
+  requestBody?: any
+) {
+  const path = convertPathsToString(paths);
+  return `return useMutation<TData, TError, TVariables, TContext>((
+    ${
+      requestBody || path
+        ? `body: {
+     ${path ? `path?: ${path},` : ""}
+      data?: TVariables
+    }`
+        : ""
+    }) => fetch.post(${requestUrl} ${
+    requestBody ? ",body.data" : ""
   }, ...restOptions) as Promise<TData>, options)`;
 }
 
@@ -64,8 +76,19 @@ export function createVueQueryTemplate(
       }
       if (request.path) {
         request.path.forEach(({ name, type }) => {
-          requestParameters.push({ name, type });
-          requestUrl = `\`${url.replaceAll(`{${name}}`, "${" + name + "}")}\``;
+          if (method === HTTP_METHODS.GET) {
+            requestParameters.push({ name, type: `Ref<${type}> | ${type}` });
+            requestUrl = `\`${url.replaceAll(
+              `{${name}}`,
+              "${" + `unref(${name})` + "}"
+            )}\``;
+          }
+          if (method === HTTP_METHODS.POST) {
+            requestUrl = `\`${url.replaceAll(
+              `{${name}}`,
+              "${" + `unref(body?.path?.${name})` + "}"
+            )}\``;
+          }
         });
       }
     }
@@ -115,7 +138,13 @@ export function createVueQueryTemplate(
         ];
       case HTTP_METHODS.POST:
         return [
-          { name: "TVariables", default: request?.body?.type || "void" },
+          {
+            name: "TVariables",
+            default: `{
+            path?: ${convertPathsToString(request?.path || []) || "void"}
+            data?: ${request?.body?.type || "void"} 
+          }`,
+          },
           { name: "TData", default: response.type },
           { name: "TError", default: "unknown" },
           { name: "TContext", default: "unknown" },
@@ -138,7 +167,7 @@ export function createVueQueryTemplate(
           request?.body
         );
       case HTTP_METHODS.POST:
-        return createPostApi(requestUrl, request?.body);
+        return createPostApi(requestUrl, request?.path || [], request?.body);
       default:
         return `return useQuery<T>(['${requestName}', ${requestParameters
           .map((item) => item.name)

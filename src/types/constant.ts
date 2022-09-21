@@ -9,12 +9,22 @@ export enum TEMPLATE_TYPE {
 }
 export const templateImportMap: Record<
   string,
-  OptionalKind<ImportDeclarationStructure>
+  OptionalKind<ImportDeclarationStructure>[]
 > = {
-  [TEMPLATE_TYPE.VUE_QUERY]: {
-    namedImports: ["useQuery", "UseQueryOptions", 'useMutation', 'UseMutationOptions'],
-    moduleSpecifier: "vue-query",
-  },
+  [TEMPLATE_TYPE.VUE_QUERY]: [
+    {
+      namedImports: [
+        "useQuery",
+        "UseQueryOptions",
+        "useMutation",
+        "UseMutationOptions",
+      ],
+      moduleSpecifier: "vue-query",
+    },
+    {
+      namedImports: ["unref", "Ref"],
+      moduleSpecifier: "vue",
+    },
+  ],
 };
 export type NORMALIZE_RESPONSE = SwaggerApiResponse;
-

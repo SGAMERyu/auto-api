@@ -1,4 +1,5 @@
-import { Definition } from "../types";
+import { OptionalKind, ParameterDeclarationStructure } from "ts-morph";
+import { Definition, RequestPath } from "../types";
 
 export function convertArrayToMap(
   arr: Record<string, unknown>[],
@@ -21,4 +22,12 @@ export function convertArrayToMap(
 
 export function replaceTrim(str: string) {
   return str.replace(/\s+/g, "");
+}
+
+export function convertPathsToString(paths: RequestPath[]) {
+  const pathsMap = paths.map((item) => `${item.name}: ${item.type}`).join(",");
+  return paths.length
+    ? `{
+      ${pathsMap} }`
+    : "";
 }

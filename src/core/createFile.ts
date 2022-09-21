@@ -80,9 +80,9 @@ export function createServiceFolder(
   config: Config
 ) {
   const { importList, output, template } = config;
-  const importDeclarationList: ImportModule[] = importList.concat([
-    templateImportMap[template] as any,
-  ]);
+  const importDeclarationList: ImportModule[] = importList.concat(
+    templateImportMap[template] as any
+  );
   const filePath = resolve(process.cwd(), `${output}`);
   apiGroup.forEach(({ name, apiList }) => {
     // 可能会有相同的引用，因此需要去重
