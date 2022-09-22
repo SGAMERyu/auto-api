@@ -27,11 +27,7 @@ function createPostApi(
 ) {
   const path = convertPathsToString(paths);
   return `return useMutation<TData, TError, TVariables, TContext>((
-    ${
-      requestBody || path
-        ? `body: any`
-        : ""
-    }) => fetch.post(${requestUrl} ${
+    ${requestBody || path ? `body: any` : ""}) => fetch.post(${requestUrl} ${
     requestBody ? ",body.data" : ""
   }, ...restOptions) as Promise<TData>, options)`;
 }
@@ -137,10 +133,17 @@ export function createVueQueryTemplate(
         return [
           {
             name: "TVariables",
-            default: `{
-            path?: ${convertPathsToString(request?.path || []) || "void"}
-            data?: ${request?.body?.type || "void"} 
-          }`,
+            default:
+              request?.body || request?.path
+                ? `{
+              ${
+                request?.path.length
+                  ? `path: ${convertPathsToString(request?.path || [])}`
+                  : ""
+              }
+              ${request?.body ? `data: ${request.body.type}` : ""}
+          }`
+                : "void",
           },
           { name: "TData", default: response.type },
           { name: "TError", default: "unknown" },
