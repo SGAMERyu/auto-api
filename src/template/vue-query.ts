@@ -29,10 +29,7 @@ function createPostApi(
   return `return useMutation<TData, TError, TVariables, TContext>((
     ${
       requestBody || path
-        ? `body: {
-     ${path ? `path?: ${path},` : ""}
-      data?: TVariables
-    }`
+        ? `body: any`
         : ""
     }) => fetch.post(${requestUrl} ${
     requestBody ? ",body.data" : ""
