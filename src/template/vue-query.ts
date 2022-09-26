@@ -28,7 +28,7 @@ function createPostApi(
   const path = convertPathsToString(paths);
   return `return useMutation<TData, TError, TVariables, TContext>((
     ${requestBody || path ? `body: any` : ""}) => fetch.post(${requestUrl} ${
-    requestBody ? ",body.data" : ""
+    requestBody ? ",unref(body.data)" : ""
   }, ...restOptions) as Promise<TData>, options)`;
 }
 
@@ -141,7 +141,11 @@ export function createVueQueryTemplate(
                   ? `path: ${convertPathsToString(request?.path || [])}`
                   : ""
               }
-              ${request?.body ? `data: ${request.body.type}` : ""}
+              ${
+                request?.body
+                  ? `data: Ref<${request.body.type}> | ${request.body.type}`
+                  : ""
+              }
           }`
                 : "void",
           },
