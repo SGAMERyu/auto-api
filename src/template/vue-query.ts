@@ -69,7 +69,6 @@ export function createVueQueryTemplate(
       }
       if (request.path) {
         request.path.forEach(({ name, type }) => {
-          console.log(name);
           if (method === HTTP_METHODS.GET) {
             requestParameters.push({ name, type: `Ref<${type}> | ${type}` });
             requestUrl = `${requestUrl.replaceAll(
