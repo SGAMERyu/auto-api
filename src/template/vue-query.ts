@@ -48,7 +48,7 @@ export function createVueQueryTemplate(
 
     return $1;
   });
-  let requestUrl = `"${url}"`;
+  let requestUrl = url;
   const queryName = camelCase(
     `use-${method}-${plainUrl.replace(/\//g, "-")}-Query`
   );
@@ -69,20 +69,22 @@ export function createVueQueryTemplate(
       }
       if (request.path) {
         request.path.forEach(({ name, type }) => {
+          console.log(name);
           if (method === HTTP_METHODS.GET) {
             requestParameters.push({ name, type: `Ref<${type}> | ${type}` });
-            requestUrl = `\`${url.replaceAll(
+            requestUrl = `${requestUrl.replaceAll(
               `{${name}}`,
               "${" + `unref(${name})` + "}"
-            )}\``;
+            )}`;
           }
           if (method === HTTP_METHODS.POST) {
-            requestUrl = `\`${url.replaceAll(
+            requestUrl = `${requestUrl.replaceAll(
               `{${name}}`,
               "${" + `unref(body?.path?.${name})` + "}"
-            )}\``;
+            )}`;
           }
         });
+        requestUrl = `\`${requestUrl}\``
       }
     }
 
