@@ -13,6 +13,7 @@ export interface Config {
   importList: ImportModule[];
   // api模板类型
   template: TEMPLATE_TYPE;
+  onlyInterface: boolean;
 }
 
 export interface ImportModule {
@@ -34,4 +35,5 @@ export const DEFAULT_CLI_CONFIG: Config = {
   type: NORMALIZE_TYPE.SWAGGER,
   importList: [],
   template: TEMPLATE_TYPE.VUE_QUERY,
+  onlyInterface: false,
 };

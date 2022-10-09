@@ -11,14 +11,16 @@ async function startup() {
   try {
     let config: Config = getAutoApiJson();
     config = Object.assign(DEFAULT_CLI_CONFIG, config);
-    const { url, type, groups, output } = config;
+    const { url, type, groups, output, onlyInterface } = config;
     const data = await fetchRawData(url);
     log(chalk.blue("start normalize api data"));
     const apiGroup = normalize(type, data, groups);
     log(chalk.green("normalize api data is finish"));
     createInterfaceFolder(apiGroup || [], output);
-    createServiceFolder(apiGroup || [], config);
-    log(chalk.green("generate api success"));
+    if (!onlyInterface) {
+      createServiceFolder(apiGroup || [], config);
+      log(chalk.green("generate api success"));
+    }
   } catch (error) {
     log(chalk.red(error));
   }
