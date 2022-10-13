@@ -84,19 +84,17 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
     interfaceData: Definition,
     dep: Set<Schema> = new Set()
   ) {
-    if (refMap.has(interfaceName)) return dep;
     dep.add(interfaceData);
-    refMap.set(interfaceName, interfaceData);
     const { properties } = interfaceData;
     Object.keys(properties).forEach((key) => {
       const { schema, items, $ref } = properties[key];
       // 引用的definition对象
       const schemaRef = schema?.$ref || items?.$ref || $ref;
       if (schemaRef) {
-        const { interfaceName, interfaceData } =
+        const { interfaceName: propInterfaceName, interfaceData } =
           getInterfaceFromDefinition(schemaRef);
-        Reflect.set(properties[key], "refType", interfaceName);
-        if (dep.has(interfaceData)) return dep;
+        Reflect.set(properties[key], "refType", propInterfaceName);
+        if (propInterfaceName === interfaceName) return dep;
         generateInterfaceFromSwaggerDefinition(
           interfaceName,
           interfaceData,
@@ -106,8 +104,6 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
         Reflect.set(properties[key], "refType", `${items.type}`);
       }
     });
-    // dep.add(interfaceData);
-    refMap.set(interfaceName, interfaceData);
     return dep;
   }
 
