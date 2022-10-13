@@ -80,9 +80,13 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
 
   // 从definition 获取对应的interfaceData
   function generateInterfaceFromSwaggerDefinition(
+    interfaceName: string,
     interfaceData: Definition,
     dep: Set<Schema> = new Set()
   ) {
+    if (refMap.has(interfaceName)) return dep;
+    dep.add(interfaceData);
+    refMap.set(interfaceName, interfaceData);
     const { properties } = interfaceData;
     Object.keys(properties).forEach((key) => {
       const { schema, items, $ref } = properties[key];
@@ -92,14 +96,18 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
         const { interfaceName, interfaceData } =
           getInterfaceFromDefinition(schemaRef);
         Reflect.set(properties[key], "refType", interfaceName);
-        if (!refMap.has(interfaceName)) {
-          generateInterfaceFromSwaggerDefinition(interfaceData, dep);
-        }
+        if (dep.has(interfaceData)) return dep;
+        generateInterfaceFromSwaggerDefinition(
+          interfaceName,
+          interfaceData,
+          dep
+        );
       } else if (items && items.type) {
         Reflect.set(properties[key], "refType", `${items.type}`);
       }
     });
-    dep.add(interfaceData as any);
+    // dep.add(interfaceData);
+    refMap.set(interfaceName, interfaceData);
     return dep;
   }
 
@@ -117,9 +125,10 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
       type: interfaceName,
       isArray: schema.type === "array",
     };
-    refMap.set(interfaceName, interfaceData);
+
     // 获取公开依赖
     generateInterfaceFromSwaggerDefinition(
+      interfaceName,
       interfaceData,
       publicDependencyInterface
     );
@@ -140,8 +149,8 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
         const { interfaceData, interfaceName } =
           getInterfaceFromDefinition(schemaRef);
         request.body = { type: interfaceName };
-        refMap.set(interfaceName, interfaceData);
         generateInterfaceFromSwaggerDefinition(
+          interfaceName,
           interfaceData,
           publicDependencyInterface
         );

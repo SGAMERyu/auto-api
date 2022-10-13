@@ -83,7 +83,7 @@ export function createVueQueryTemplate(
             )}`;
           }
         });
-        requestUrl = `\`${requestUrl}\``
+        requestUrl = `\`${requestUrl}\``;
       }
     }
 
@@ -135,7 +135,7 @@ export function createVueQueryTemplate(
           {
             name: "TVariables",
             default:
-              request?.body || request?.path
+              request?.body || request?.path?.length
                 ? `{
               ${
                 request?.path.length
