@@ -9,7 +9,6 @@ import {
   templateImportMap,
 } from "../types";
 import { createVueQueryTemplate } from "../template";
-import { log } from "../utils";
 
 const project = new Project();
 

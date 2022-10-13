@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import {
   NORMALIZE_TYPE,
   NORMALIZE_RESPONSE,
@@ -16,6 +15,8 @@ import {
   Response,
   SWAGGER_DATA_TYPE,
 } from "../types";
+
+const refMap = new Map();
 
 export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
   const { paths, definitions } = data;
@@ -91,7 +92,9 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
         const { interfaceName, interfaceData } =
           getInterfaceFromDefinition(schemaRef);
         Reflect.set(properties[key], "refType", interfaceName);
-        generateInterfaceFromSwaggerDefinition(interfaceData, dep);
+        if (!refMap.has(interfaceName)) {
+          generateInterfaceFromSwaggerDefinition(interfaceData, dep);
+        }
       } else if (items && items.type) {
         Reflect.set(properties[key], "refType", `${items.type}`);
       }
@@ -102,16 +105,20 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
 
   function generateResponseInterface(responseData: SwaggerResponses) {
     let newResponse: Response = { type: "any", noExport: true };
+    // 公开依赖引入
     const publicDependencyInterface: Set<Schema> = new Set();
     const { schema } = responseData[200];
     const schemaRef = schema?.$ref || schema?.items?.$ref;
     if (!schemaRef) return { response: newResponse, publicDependencyInterface };
+    // 获取ref对象所引用的interface对象
     const { interfaceData, interfaceName } =
       getInterfaceFromDefinition(schemaRef);
     newResponse = {
       type: interfaceName,
       isArray: schema.type === "array",
     };
+    refMap.set(interfaceName, interfaceData);
+    // 获取公开依赖
     generateInterfaceFromSwaggerDefinition(
       interfaceData,
       publicDependencyInterface
@@ -133,6 +140,7 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
         const { interfaceData, interfaceName } =
           getInterfaceFromDefinition(schemaRef);
         request.body = { type: interfaceName };
+        refMap.set(interfaceName, interfaceData);
         generateInterfaceFromSwaggerDefinition(
           interfaceData,
           publicDependencyInterface
