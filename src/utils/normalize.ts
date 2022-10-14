@@ -16,8 +16,6 @@ import {
   SWAGGER_DATA_TYPE,
 } from "../types";
 
-const refMap = new Map();
-
 export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
   const { paths, definitions } = data;
   const serviceGroup: GroupApiInterface[] = groups.map((group) => {
@@ -26,7 +24,7 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
     let publicDependencyInterface: Set<Schema> = new Set();
     for (const [path, apiData] of Object.entries(paths)) {
       let patten = group.apiPrefix;
-      if (typeof group.apiPrefix === "string") {
+      if (typeof patten === "string") {
         patten = new RegExp(patten, "g");
       }
       if (patten.test(path)) {
@@ -111,7 +109,7 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
     let newResponse: Response = { type: "any", noExport: true };
     // 公开依赖引入
     const publicDependencyInterface: Set<Schema> = new Set();
-    const { schema } = responseData[200];
+    const { schema } = responseData[200] || {};
     const schemaRef = schema?.$ref || schema?.items?.$ref;
     if (!schemaRef) return { response: newResponse, publicDependencyInterface };
     // 获取ref对象所引用的interface对象
