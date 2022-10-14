@@ -25,7 +25,7 @@ export interface ApiInterface {
 }
 
 export interface Request {
-  query: RequestQuery | null;
+  query: RequestQuery[];
   path: RequestPath[];
   body: { type: string } | null;
 }

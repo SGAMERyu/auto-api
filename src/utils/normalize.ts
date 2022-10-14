@@ -135,7 +135,7 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
     const publicDependencyInterface: Set<Schema> = new Set();
     const request: Request = {
       body: null,
-      query: null,
+      query: [],
       path: [],
     };
     parameters.forEach((parameter) => {
@@ -156,7 +156,10 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
           type: SWAGGER_DATA_TYPE_TO_TS_TYPE[parameter.type],
         });
       } else if (type === "query") {
-        //
+        request.query?.push({
+          ...parameter,
+          type: SWAGGER_DATA_TYPE_TO_TS_TYPE[parameter.type],
+        });
       } else if (type === "formData") {
         request.body = {
           type: SWAGGER_DATA_TYPE_TO_TS_TYPE[SWAGGER_DATA_TYPE.FILE],

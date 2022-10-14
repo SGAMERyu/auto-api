@@ -17,7 +17,7 @@ function createGetApi(
     .map((item) => item.name)
     .join(",")}], () => fetch.get(${requestUrl} ${
     body ? ",body" : ""
-  }, ...restOptions) as Promise<T>, options)`;
+  }, { ...fetchOptions, ...restOptions }) as Promise<T>, options)`;
 }
 
 function createPostApi(
@@ -27,9 +27,11 @@ function createPostApi(
 ) {
   const path = convertPathsToString(paths);
   return `return useMutation<TData, TError, TVariables, TContext>((
-    ${requestBody || path ? `body: any` : ""}) => fetch.post(${requestUrl} ${
+    ${
+      requestBody || path ? `body: any,` : ""
+    } fetchOptions?: any) => fetch.post(${requestUrl} ${
     requestBody ? ",unref(body.data)" : ""
-  }, ...restOptions) as Promise<TData>, options)`;
+  }, { ...fetchOptions, ...restOptions }) as Promise<TData>, options)`;
 }
 
 export function createVueQueryTemplate(
@@ -54,15 +56,15 @@ export function createVueQueryTemplate(
   );
   const requestName = camelCase(`${method}-${plainUrl.replace(/\//g, "-")}`);
 
-  const { vueQueryParameters, requestParameters } = createVueQueryParameters(
-    method as HTTP_METHODS
-  );
+  const { vueQueryParameters, requestParameters, queryParameters } =
+    createVueQueryParameters(method as HTTP_METHODS);
   const typeParameters = createTypeParameters(method as HTTP_METHODS);
   const statements = createStatement(method as HTTP_METHODS, requestParameters);
 
   function createVueQueryParameters(method: HTTP_METHODS) {
     let vueQueryParameters: OptionalKind<ParameterDeclarationStructure>[] = [];
     const requestParameters: OptionalKind<ParameterDeclarationStructure>[] = [];
+    const queryParameters: OptionalKind<ParameterDeclarationStructure>[] = [];
     if (request) {
       if (request.body && method === HTTP_METHODS.GET) {
         requestParameters.push({ name: "body", type: request.body.type });
@@ -84,6 +86,11 @@ export function createVueQueryTemplate(
           }
         });
         requestUrl = `\`${requestUrl}\``;
+      }
+      if (request.query) {
+        request.query.forEach(({ name, type }) => {
+          queryParameters.push({ name, type: `Ref<${type}> | ${type}` });
+        });
       }
     }
 
@@ -118,7 +125,8 @@ export function createVueQueryTemplate(
 
         break;
     }
-    return { vueQueryParameters, requestParameters };
+
+    return { vueQueryParameters, requestParameters, queryParameters };
   }
 
   function createTypeParameters(method: HTTP_METHODS) {
@@ -148,7 +156,7 @@ export function createVueQueryTemplate(
                   : ""
               }
           }`
-                : "void",
+                : "any",
           },
           { name: "TData", default: response.type },
           { name: "TError", default: "unknown" },

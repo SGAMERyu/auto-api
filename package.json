@@ -1,5 +1,5 @@
 {
-  "name": "@piece/auto-api",
+  "name": "@cotton-yu/auto-api",
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
@@ -7,6 +7,10 @@
   "bin": {
     "auto-api": "bin/auto-api.mjs"
   },
+  "files": [
+    "bin",
+    "dist"
+  ],
   "scripts": {
     "prepare": "husky install",
     "commit": "npx git-cz",
@@ -15,7 +19,7 @@
     "lint": "lint-staged"
   },
   "keywords": [],
-  "author": "",
+  "author": "qixiyu <sgamerrain@gmail.com>",
   "license": "ISC",
   "lint-staged": {
     "*.js": [
