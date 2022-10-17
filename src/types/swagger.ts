@@ -109,6 +109,7 @@ export interface SwaggerParameters {
   // 类型
   type: string;
   refType?: string;
+  items?: { type: string };
   schema?: { $ref: string; items?: { $ref: string } };
 }
 

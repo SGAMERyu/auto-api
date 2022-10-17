@@ -9,26 +9,77 @@ import { withQuery } from "ufo";
 import { convertPathsToString } from "../utils";
 import { Request } from "../types/index";
 
-function createGetApi(
-  requestName: string,
-  parameters: OptionalKind<ParameterDeclarationStructure>[],
-  requestUrl: string,
-  body?: any
-) {
-  return `return useQuery<T>(['${requestName}', ${parameters
-    .map((item) => item.name)
-    .join(",")}], () => fetch.get(${requestUrl} ${
-    body ? ",body" : ""
-  }, ...restOptions) as Promise<T>, options)`;
+const POST_VUE_QUERY = [
+  {
+    name: "options",
+    type: `UseMutationOptions<TData, TError, TVariables, TContext>`,
+    initializer: "{}",
+  },
+  {
+    name: "restOptions",
+    type: "any",
+    isRestParameter: true,
+  },
+];
+
+const GET_VUE_QUERY = [
+  {
+    name: "options",
+    type: `UseQueryOptions<T>`,
+    initializer: "{}",
+  },
+  {
+    name: "restOptions",
+    type: "any[]",
+    isRestParameter: true,
+  },
+];
+
+function hasRequestQueryParams(request: Request | undefined) {
+  return request?.body || request?.path?.length || request?.query?.length;
 }
 
-function hasVariables(request: Request | undefined) {
-  return request?.body || request?.path?.length || request?.query?.length;
+function getQueryType(request: Request | undefined) {
+  return hasRequestQueryParams(request)
+    ? `{
+      ${
+        request?.query?.length
+          ? `query: ${convertPathsToString(request.query)}`
+          : ""
+      }
+      ${
+        request?.path?.length
+          ? `path: ${convertPathsToString(request.path)}`
+          : ""
+      }
+      ${
+        request?.body
+          ? `data: Ref<${request.body.type}> | ${request.body.type}`
+          : ""
+      }
+  }`
+    : "any";
+}
+
+function createGetApi(
+  requestName: string,
+  request: Request | undefined,
+  requestUrl: string
+) {
+  return `return useQuery<T>(['${requestName}', ${
+    hasRequestQueryParams(request)
+      ? `
+          ${request?.body ? "body.data," : ""}
+          ${request?.path.length ? "body.path," : ""}
+          ${request?.query.length ? "body.query," : ""}
+        `
+      : ""
+  }], () => fetch.get(${requestUrl}, ...restOptions) as Promise<T>, options)`;
 }
 
 function createPostApi(requestUrl: string, request: Request | undefined) {
   const { body: requestBody } = request || {};
-  const isHaveVariables = hasVariables(request);
+  const isHaveVariables = hasRequestQueryParams(request);
   return `return useMutation<TData, TError, TVariables, TContext>((
     ${isHaveVariables ? `body: any,` : ""}) => fetch.post(${requestUrl} ${
     requestBody ? ",unref(body.data)" : ""
@@ -57,11 +108,11 @@ export function createVueQueryTemplate(
   );
   const requestName = camelCase(`${method}-${plainUrl.replace(/\//g, "-")}`);
 
-  const { vueQueryParameters, requestParameters } = createVueQueryParameters(
+  const { vueQueryParameters } = createVueQueryParameters(
     method as HTTP_METHODS
   );
   const typeParameters = createTypeParameters(method as HTTP_METHODS);
-  const statements = createStatement(method as HTTP_METHODS, requestParameters);
+  const statements = createStatement(method as HTTP_METHODS);
 
   function createVueQueryParameters(method: HTTP_METHODS) {
     let vueQueryParameters: OptionalKind<ParameterDeclarationStructure>[] = [];
@@ -73,19 +124,11 @@ export function createVueQueryTemplate(
     }
     if (request?.path) {
       request.path.forEach(({ name, type }) => {
-        if (method === HTTP_METHODS.GET) {
-          requestParameters.push({ name, type: `Ref<${type}> | ${type}` });
-          requestUrl = `${requestUrl.replaceAll(
-            `{${name}}`,
-            "${" + `unref(${name})` + "}"
-          )}`;
-        }
-        if (method === HTTP_METHODS.POST) {
-          requestUrl = `${requestUrl.replaceAll(
-            `{${name}}`,
-            "${" + `unref(body?.path?.${name})` + "}"
-          )}`;
-        }
+        requestParameters.push({ name, type: `Ref<${type}> | ${type}` });
+        requestUrl = `${requestUrl.replaceAll(
+          `{${name}}`,
+          "${" + `unref(body?.path?.${name})` + "}"
+        )}`;
       });
     }
     if (request?.query) {
@@ -97,41 +140,23 @@ export function createVueQueryTemplate(
       requestUrl = withQuery(requestUrl, queryMap);
     }
     requestUrl = `\`${requestUrl}\``;
-
+    const getQueryParameters = [
+      {
+        name: "body",
+        type: getQueryType(request),
+      },
+    ];
     vueQueryParameters = vueQueryParameters.concat(queryParameters);
     switch (method) {
       case HTTP_METHODS.GET:
-        vueQueryParameters = requestParameters.concat([
-          {
-            name: "options",
-            type: `UseQueryOptions<T>`,
-            initializer: "{}",
-          },
-          {
-            name: "restOptions",
-            type: "any[]",
-            isRestParameter: true,
-          },
-        ]);
+        vueQueryParameters = getQueryParameters.concat(GET_VUE_QUERY);
         break;
       case HTTP_METHODS.POST:
-        vueQueryParameters = requestParameters.concat([
-          {
-            name: "options",
-            type: `UseMutationOptions<TData, TError, TVariables, TContext>`,
-            initializer: "{}",
-          },
-          {
-            name: "restOptions",
-            type: "any",
-            isRestParameter: true,
-          },
-        ]);
-
+        vueQueryParameters = POST_VUE_QUERY;
         break;
     }
 
-    return { vueQueryParameters, requestParameters, queryParameters };
+    return { vueQueryParameters };
   }
 
   function createTypeParameters(method: HTTP_METHODS) {
@@ -147,26 +172,7 @@ export function createVueQueryTemplate(
         return [
           {
             name: "TVariables",
-            default: hasVariables(request)
-              ? `{
-                  ${
-                    request?.query?.length
-                      ? `query: ${convertPathsToString(request.query)}`
-                      : ""
-                  }
-                  ${
-                    request?.path?.length
-                      ? `path: ${convertPathsToString(request.path)}`
-                      : ""
-                  }
-              ${
-                request?.body
-                  ? `data: Ref<${request.body.type}> | ${request.body.type}`
-                  : ""
-              }
-
-          }`
-              : "any",
+            default: getQueryType(request),
           },
           { name: "TData", default: response.type },
           { name: "TError", default: "unknown" },
@@ -177,26 +183,12 @@ export function createVueQueryTemplate(
     }
   }
 
-  function createStatement(
-    method: HTTP_METHODS,
-    requestParameters: OptionalKind<ParameterDeclarationStructure>[]
-  ) {
+  function createStatement(method: HTTP_METHODS) {
     switch (method) {
       case HTTP_METHODS.GET:
-        return createGetApi(
-          requestName,
-          requestParameters,
-          requestUrl,
-          request?.body
-        );
+        return createGetApi(requestName, request, requestUrl);
       case HTTP_METHODS.POST:
         return createPostApi(requestUrl, request);
-      default:
-        return `return useQuery<T>(['${requestName}', ${requestParameters
-          .map((item) => item.name)
-          .join(",")}], () => fetch.${method}(${requestUrl} ${
-          request?.body ? ",body" : ""
-        }) as Promise<T>, options)`;
     }
   }
 
