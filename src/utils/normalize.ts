@@ -16,6 +16,12 @@ import {
   SWAGGER_DATA_TYPE,
 } from "../types";
 
+function convertTypeToTsType(parameter: SwaggerParameters) {
+  return parameter.type === "array"
+    ? `Array<${SWAGGER_DATA_TYPE_TO_TS_TYPE[parameter.items!.type]}>`
+    : SWAGGER_DATA_TYPE_TO_TS_TYPE[parameter.type];
+}
+
 export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
   const { paths, definitions } = data;
   const serviceGroup: GroupApiInterface[] = groups.map((group) => {
@@ -151,12 +157,12 @@ export function normalizeSwagger(data: SwaggerApiResponse, groups: ApiGroup[]) {
       } else if (type === "path") {
         request.path.push({
           ...parameter,
-          type: SWAGGER_DATA_TYPE_TO_TS_TYPE[parameter.type],
+          type: convertTypeToTsType(parameter),
         });
       } else if (type === "query") {
         request.query?.push({
           ...parameter,
-          type: SWAGGER_DATA_TYPE_TO_TS_TYPE[parameter.type],
+          type: convertTypeToTsType(parameter),
         });
       } else if (type === "formData") {
         request.body = {
