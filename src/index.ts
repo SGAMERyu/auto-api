@@ -17,10 +17,10 @@ async function startup() {
     const apiGroup = normalize(type, data, groups);
     log(chalk.green("normalize api data is finish"));
     createInterfaceFolder(apiGroup || [], output);
-    if (!onlyInterface) {
-      createServiceFolder(apiGroup || [], config);
-      log(chalk.green("generate api success"));
-    }
+    // if (!onlyInterface) {
+    //   createServiceFolder(apiGroup || [], config);
+    //   log(chalk.green("generate api success"));
+    // }
   } catch (error) {
     log(chalk.red(error));
   }

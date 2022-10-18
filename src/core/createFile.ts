@@ -9,6 +9,7 @@ import {
   templateImportMap,
 } from "../types";
 import { createVueQueryTemplate } from "../template";
+import { e } from "ohmyfetch/dist/error-d4c70d05";
 
 const project = new Project();
 
@@ -26,47 +27,60 @@ export function createInterfaceFolder(
     );
 
     publicDependencyInterface.forEach((interfaceData) => {
-      const { title } = interfaceData;
-      const interfaceDeclaration = sourceFile
-        .addInterface({ name: title! })
-        .setIsExported(true);
-      for (const [name, value] of Object.entries(
-        interfaceData.properties || {}
-      )) {
-        const { refType, type, enum: enums } = value;
-        let propertyItemType = SWAGGER_DATA_TYPE_TO_TS_TYPE[type] || refType;
-        if (
-          [SWAGGER_DATA_TYPE.ARRAY, SWAGGER_DATA_TYPE.OBJECT].includes(
-            type as SWAGGER_DATA_TYPE
-          )
-        ) {
-          if (!refType && propertyItemType === SWAGGER_DATA_TYPE.OBJECT) {
-            propertyItemType = "Record<string, any>";
-          } else {
-            propertyItemType =
-              type === SWAGGER_DATA_TYPE.OBJECT && refType
-                ? refType
-                : `${refType!}[]`;
+      try {
+        const { title } = interfaceData;
+        const interfaceDeclaration = sourceFile
+          .addInterface({ name: title! })
+          .setIsExported(true);
+        for (const [name, value] of Object.entries(
+          interfaceData.properties || {}
+        )) {
+          const { refType, type, enum: enums, items } = value;
+          let propertyItemType = SWAGGER_DATA_TYPE_TO_TS_TYPE[type] || refType;
+          if (
+            [SWAGGER_DATA_TYPE.ARRAY, SWAGGER_DATA_TYPE.OBJECT].includes(
+              type as SWAGGER_DATA_TYPE
+            )
+          ) {
+            if (type === SWAGGER_DATA_TYPE.OBJECT) {
+              propertyItemType = refType || "Record<string, any>";
+            }
+            if (type === SWAGGER_DATA_TYPE.ARRAY) {
+              propertyItemType = items?.type
+                ? `${SWAGGER_DATA_TYPE_TO_TS_TYPE[items?.type]}[]`
+                : "any[]";
+            }
           }
-        }
-        // 如果是枚举
-        if (enums) {
-          propertyItemType = `${title!.toUpperCase()}_${name.toUpperCase()}_ENUM`;
-          const members = enums.map((item) => {
-            return { name: item, value: item };
-          });
-          sourceFile
-            .addEnum({
-              name: propertyItemType,
-              members,
-            })
-            .setIsExported(true);
-        }
 
-        interfaceDeclaration.addProperty({
-          name,
-          type: propertyItemType,
-        });
+          // 如果是枚举
+          if (enums) {
+            propertyItemType = `${title!.toUpperCase()}_${name.toUpperCase()}_ENUM`;
+            if (enums.some((item) => typeof item === "number")) {
+              sourceFile.addTypeAlias({
+                name: propertyItemType,
+                type: enums.join("|"),
+              });
+            } else {
+              const members = enums.map((item) => {
+                return { name: item.toString(), value: item };
+              });
+              sourceFile
+                .addEnum({
+                  name: propertyItemType,
+                  members,
+                  isConst: true,
+                })
+                .setIsExported(true);
+            }
+          }
+
+          interfaceDeclaration.addProperty({
+            name,
+            type: propertyItemType,
+          });
+        }
+      } catch (error) {
+        console.log(error);
       }
     });
 
