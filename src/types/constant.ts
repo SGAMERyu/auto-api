@@ -19,7 +19,7 @@ export const templateImportMap: Record<
         "useMutation",
         "UseMutationOptions",
       ],
-      moduleSpecifier: "vue-query",
+      moduleSpecifier: "@tanstack/vue-query",
     },
     {
       namedImports: ["unref", "Ref"],
