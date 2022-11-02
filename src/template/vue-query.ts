@@ -12,7 +12,7 @@ import { Request } from "../types/index";
 const POST_VUE_QUERY = [
   {
     name: "options",
-    type: `UseMutationOptions<TData, TError, TVariables, TContext>`,
+    type: `VueMutationObserverOptions<TData, TError, TVariables, TContext>`,
     initializer: "{}",
   },
   {

@@ -17,7 +17,7 @@ export const templateImportMap: Record<
         "useQuery",
         "UseQueryOptions",
         "useMutation",
-        "UseMutationOptions",
+        "VueMutationObserverOptions",
       ],
       moduleSpecifier: "@tanstack/vue-query",
     },
