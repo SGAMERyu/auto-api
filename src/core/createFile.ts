@@ -9,7 +9,6 @@ import {
   templateImportMap,
 } from "../types";
 import { createVueQueryTemplate } from "../template";
-import { e } from "ohmyfetch/dist/error-d4c70d05";
 
 const project = new Project();
 
@@ -54,16 +53,18 @@ export function createInterfaceFolder(
 
           // 如果是枚举
           if (enums) {
+            const newEnums = [...new Set(enums)];
             propertyItemType = `${title!.toUpperCase()}_${name.toUpperCase()}_ENUM`;
-            if (enums.some((item) => typeof item === "number")) {
+            if (newEnums.some((item) => typeof item === "number")) {
               sourceFile.addTypeAlias({
                 name: propertyItemType,
                 type: enums.join("|"),
               });
             } else {
-              const members = enums.map((item) => {
+              const members = newEnums.map((item) => {
                 return { name: item.toString(), value: item };
               });
+              // console.log(members)
               sourceFile
                 .addEnum({
                   name: propertyItemType,
