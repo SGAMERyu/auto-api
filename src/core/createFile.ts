@@ -9,7 +9,6 @@ import {
   templateImportMap,
 } from "../types";
 import { createVueQueryTemplate } from "../template";
-import { e } from "ohmyfetch/dist/error-d4c70d05";
 
 const project = new Project();
 
