@@ -25,7 +25,9 @@ export function replaceTrim(str: string) {
 }
 
 export function convertPathsToString(paths: RequestPath[]) {
-  const pathsMap = paths.map((item) => `${item.name}: ${item.type}`).join(",");
+  const pathsMap = paths
+    .map((item) => `${item.name}: Ref<${item.type}> | ${item.type}`)
+    .join(",");
   return paths.length
     ? `{
       ${pathsMap} }`

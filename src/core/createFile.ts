@@ -5,7 +5,9 @@ import {
   GroupApiInterface,
   ImportModule,
   SWAGGER_DATA_TYPE,
+  SWAGGER_DATA_TYPE_LIST,
   SWAGGER_DATA_TYPE_TO_TS_TYPE,
+  SWAGGGER_DATA_TYPE_LIST,
   templateImportMap,
 } from "../types";
 import { createVueQueryTemplate } from "../template";
@@ -45,8 +47,16 @@ export function createInterfaceFolder(
               propertyItemType = refType || "Record<string, any>";
             }
             if (type === SWAGGER_DATA_TYPE.ARRAY) {
-              propertyItemType = items?.type
-                ? `${SWAGGER_DATA_TYPE_TO_TS_TYPE[items?.type]}[]`
+              const type =
+                items?.$ref?.split("/").pop()!.replace(/«|»|,/g, "") ||
+                items?.type;
+
+              propertyItemType = type
+                ? `${
+                    SWAGGER_DATA_TYPE_LIST.includes(type)
+                      ? `${SWAGGER_DATA_TYPE_TO_TS_TYPE[type]}[]`
+                      : `${type}[]`
+                  }`
                 : "any[]";
             }
           }

@@ -3,6 +3,8 @@ import { HTTP_METHODS, HTTP_STATUS_CODE, PARAMS_TYPE } from "./operation";
 export type URL = string;
 export type Version = string;
 
+export const SWAGGER_DATA_TYPE_LIST = ['number', 'string', 'integer', 'boolean', 'array', 'object', 'file']
+
 export const enum SWAGGER_DATA_TYPE {
   NUMBER = "number",
   STRING = "string",

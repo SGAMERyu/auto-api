@@ -59,7 +59,7 @@ export interface Schema {
   description?: string;
   required?: boolean;
   enum?: string[];
-  items?: { type: string };
+  items?: { type: string, $ref: string };
   properties?: {
     [name in string]: Schema;
   };
