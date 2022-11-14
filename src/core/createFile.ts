@@ -1,5 +1,6 @@
 import { Project } from "ts-morph";
 import { resolve } from "path";
+import { upperFirst } from 'scule'
 import {
   Config,
   GroupApiInterface,
@@ -7,7 +8,6 @@ import {
   SWAGGER_DATA_TYPE,
   SWAGGER_DATA_TYPE_LIST,
   SWAGGER_DATA_TYPE_TO_TS_TYPE,
-  SWAGGGER_DATA_TYPE_LIST,
   templateImportMap,
 } from "../types";
 import { createVueQueryTemplate } from "../template";
@@ -64,7 +64,7 @@ export function createInterfaceFolder(
           // 如果是枚举
           if (enums) {
             const newEnums = [...new Set(enums)];
-            propertyItemType = `${title!.toUpperCase()}_${name.toUpperCase()}_ENUM`;
+            propertyItemType = `${upperFirst(title!)}${upperFirst(name)}Enum`;
             if (newEnums.some((item) => typeof item === "number")) {
               sourceFile.addTypeAlias({
                 name: propertyItemType,

@@ -1,6 +1,6 @@
 {
   "name": "@cotton-yu/auto-api",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -56,6 +56,7 @@
     "chalk": "^5.0.1",
     "lodash.merge": "^4.6.2",
     "ohmyfetch": "^0.4.18",
+    "scule": "^0.3.2",
     "ts-morph": "^15.1.0",
     "ufo": "^0.8.5"
   }
