@@ -1,6 +1,6 @@
 import { Project } from "ts-morph";
 import { resolve } from "path";
-import { upperFirst } from 'scule'
+import { upperFirst } from "scule";
 import {
   Config,
   GroupApiInterface,
@@ -65,7 +65,13 @@ export function createInterfaceFolder(
           if (enums) {
             const newEnums = [...new Set(enums)];
             propertyItemType = `${upperFirst(title!)}${upperFirst(name)}Enum`;
-            if (newEnums.some((item) => typeof item === "number")) {
+            if (
+              newEnums.some(
+                (item) =>
+                  typeof Number(item) === "number" &&
+                  !Number.isNaN(Number(item))
+              )
+            ) {
               sourceFile.addTypeAlias({
                 name: propertyItemType,
                 type: enums.join("|"),
