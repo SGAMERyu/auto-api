@@ -80,7 +80,6 @@ export function createInterfaceFolder(
               const members = newEnums.map((item) => {
                 return { name: item.toString(), value: item };
               });
-              // console.log(members)
               sourceFile
                 .addEnum({
                   name: propertyItemType,

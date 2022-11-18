@@ -82,7 +82,7 @@ function createPostApi(requestUrl: string, request: Request | undefined) {
   const isHaveVariables = hasRequestQueryParams(request);
   return `return useMutation<TData, TError, TVariables, TContext>((
     ${isHaveVariables ? `body: any,` : ""}) => fetch.post(${requestUrl} ${
-    requestBody ? ",unref(body.data)" : ""
+    requestBody ? ",unref(body.data)" : "null"
   },  ...restOptions) as Promise<TData>, options)`;
 }
 
