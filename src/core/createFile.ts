@@ -93,6 +93,7 @@ export function createInterfaceFolder(
           interfaceDeclaration.addProperty({
             name,
             type: propertyItemType,
+            hasQuestionToken: true
           });
         }
       } catch (error) {
